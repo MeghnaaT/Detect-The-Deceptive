@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+pydantic
+python-multipart
+torch
+torchvision
+numpy
+opencv-python
+scikit-learn
+transformers
+python-jose
+passlib[bcrypt]
