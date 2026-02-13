@@ -2,9 +2,11 @@
 
 import os
 import time
+import random
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from torch.utils.data import DataLoader, Subset
 
 from model import get_model
 from dataset import get_dataloaders
@@ -14,18 +16,17 @@ from utils import train_one_epoch, validate
 def main():
 
     # -----------------------------
-    # Device Setup
+    # Device
     # -----------------------------
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("Using device:", device)
 
     if torch.cuda.is_available():
         print("GPU:", torch.cuda.get_device_name(0))
-        print("CUDA Version:", torch.version.cuda)
     print("-" * 50)
 
     # -----------------------------
-    # Mount Google Drive (Colab only)
+    # Mount Drive (Colab)
     # -----------------------------
     try:
         from google.colab import drive
@@ -42,20 +43,18 @@ def main():
     train_dir = "data/real_vs_fake/real-vs-fake/train"
     valid_dir = "data/real_vs_fake/real-vs-fake/valid"
 
-    if not os.path.exists(train_dir):
-        raise FileNotFoundError(f"Train directory not found: {train_dir}")
-
-    if not os.path.exists(valid_dir):
-        raise FileNotFoundError(f"Valid directory not found: {valid_dir}")
-
-    # -----------------------------
-    # Data Loaders
-    # -----------------------------
+    # Load full dataset
     print("Loading datasets...")
-    train_loader, valid_loader = get_dataloaders(train_dir, valid_dir)
-    print("Datasets loaded successfully.")
-    print(f"Train batches: {len(train_loader)}")
-    print(f"Valid batches: {len(valid_loader)}")
+    train_loader_full, valid_loader = get_dataloaders(
+        train_dir,
+        valid_dir,
+        batch_size=32
+    )
+
+    full_train_dataset = train_loader_full.dataset
+
+    print("Datasets loaded.")
+    print("Total training samples:", len(full_train_dataset))
     print("-" * 50)
 
     # -----------------------------
@@ -64,31 +63,29 @@ def main():
     model = get_model()
     model.to(device)
 
-    print("Model moved to device:", next(model.parameters()).device)
-    print("-" * 50)
-
-    # -----------------------------
-    # Loss & Optimizer
-    # -----------------------------
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.AdamW(model.parameters(), lr=1e-4)
 
-    epochs = 5
+    # -----------------------------
+    # Training Settings
+    # -----------------------------
+    epochs = 30
+    subset_size = 5000
     best_val_acc = 0.0
     start_epoch = 0
 
-    # -----------------------------
-    # Resume Logic
-    # -----------------------------
     latest_checkpoint = os.path.join(save_dir, "latest_checkpoint.pth")
 
+    # -----------------------------
+    # Resume if checkpoint exists
+    # -----------------------------
     if os.path.exists(latest_checkpoint):
         print("Resuming from checkpoint...")
         checkpoint = torch.load(latest_checkpoint, map_location=device)
         model.load_state_dict(checkpoint["model_state_dict"])
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         start_epoch = checkpoint["epoch"] + 1
-        best_val_acc = checkpoint.get("best_val_acc", 0.0)
+        best_val_acc = checkpoint["best_val_acc"]
         print(f"Resumed from epoch {start_epoch}")
         print("-" * 50)
 
@@ -98,10 +95,27 @@ def main():
     for epoch in range(start_epoch, epochs):
 
         print(f"\n===== Epoch {epoch+1}/{epochs} =====")
+
+        # ---- Random 5K subset ----
+        dataset_size = len(full_train_dataset)
+        indices = random.sample(range(dataset_size), subset_size)
+        subset = Subset(full_train_dataset, indices)
+
+        subset_loader = DataLoader(
+            subset,
+            batch_size=32,
+            shuffle=True,
+            num_workers=0
+        )
+
         start_time = time.time()
 
         train_loss, train_acc = train_one_epoch(
-            model, train_loader, criterion, optimizer, device
+            model,
+            subset_loader,
+            criterion,
+            optimizer,
+            device
         )
 
         val_acc = validate(model, valid_loader, device)
@@ -112,7 +126,7 @@ def main():
         print(f"Train Accuracy: {train_acc:.4f}")
         print(f"Validation Accuracy: {val_acc:.4f}")
         print(f"Epoch Time: {epoch_time/60:.2f} minutes")
-        print("=" * 50)
+        print("-" * 50)
 
         # -----------------------------
         # Save Latest Checkpoint
