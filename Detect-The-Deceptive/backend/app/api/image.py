@@ -8,6 +8,7 @@ from app.services.image_service import analyze_image
 from app.ml.image.model import load_model
 from app.ml.image.preprocess import preprocess_image
 from app.ml.image.gradcam import generate_gradcam
+from app.ml.image.inference import predict_image
 
 router = APIRouter()   # 👈 THIS MUST COME BEFORE DECORATORS
 
@@ -37,3 +38,8 @@ async def visualize_image(file: UploadFile = File(...)):
     io_buf = io.BytesIO(buffer)
 
     return StreamingResponse(io_buf, media_type="image/png")
+@router.post("/analyze/image")
+async def analyze_image(file: UploadFile = File(...)):
+    contents = await file.read()
+    result = predict_image(contents)
+    return result
