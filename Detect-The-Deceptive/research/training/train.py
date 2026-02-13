@@ -11,8 +11,9 @@ from utils import train_one_epoch, validate
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    train_dir = "data/train"
-    valid_dir = "data/valid"
+    train_dir = "data/real_vs_fake/real-vs-fake/train"
+    valid_dir = "data/real_vs_fake/real-vs-fake/valid"
+
 
     train_loader, valid_loader = get_dataloaders(train_dir, valid_dir)
 
