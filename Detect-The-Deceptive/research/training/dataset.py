@@ -39,7 +39,7 @@ def get_dataloaders(train_dir, valid_dir, batch_size=32):
         train_dataset,
         batch_size=batch_size,
         shuffle=True,
-        num_workers=2,
+        num_workers=0,
         pin_memory=True
     )
 
@@ -47,7 +47,7 @@ def get_dataloaders(train_dir, valid_dir, batch_size=32):
         valid_dataset,
         batch_size=batch_size,
         shuffle=False,
-        num_workers=2,
+        num_workers=0,
         pin_memory=True
     )
 
