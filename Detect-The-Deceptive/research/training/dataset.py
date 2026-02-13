@@ -27,7 +27,7 @@ def get_dataloaders(train_dir, valid_dir, batch_size=32):
     train_dataset = ImageFolder(train_dir, transform=train_transform)
     valid_dataset = ImageFolder(valid_dir, transform=valid_transform)
 
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
-    valid_loader = DataLoader(valid_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=2)
+    valid_loader = DataLoader(valid_dataset, batch_size=batch_size, shuffle=False, num_workers=2)
 
     return train_loader, valid_loader
