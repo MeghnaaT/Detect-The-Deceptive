@@ -10,6 +10,18 @@ from model import get_model
 from dataset import get_dataloaders
 from utils import train_one_epoch, validate
 
+def main():
+    print("Script started")
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print("Using device:", device)
+
+    train_dir = "data/real_vs_fake/real-vs-fake/train"
+    valid_dir = "data/real_vs_fake/real-vs-fake/valid"
+
+    print("Loading datasets...")
+    train_loader, valid_loader = get_dataloaders(train_dir, valid_dir)
+    print("Datasets loaded.")
 
 def main():
 
@@ -93,6 +105,7 @@ def main():
 
     torch.save(model.state_dict(), save_path)
     print(f"\nModel saved successfully at: {save_path}")
+
 
 
 if __name__ == "__main__":
