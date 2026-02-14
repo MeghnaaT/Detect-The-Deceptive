@@ -1,29 +1,22 @@
+# backend/app/ml/image/model.py
+
 import torch
-import torchvision.models as models
+import torch.nn as nn
+from torchvision import models
 
-class EfficientNetWithHooks(torch.nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.model = models.efficientnet_b0(weights="DEFAULT")
-        self.model.classifier[1] = torch.nn.Linear(1280, 2)
+MODEL_PATH = "app/ml/image/models/best_model.pth"
 
-        self.gradients = None
-        self.activations = None
+def get_model():
 
-        target_layer = self.model.features[-1]
-        target_layer.register_forward_hook(self.save_activation)
-        target_layer.register_full_backward_hook(self.save_gradient)
+    model = models.convnext_small(pretrained=False)
 
-    def save_activation(self, module, input, output):
-        self.activations = output
+    # Replace classifier for binary classification
+    model.classifier[2] = nn.Linear(
+        model.classifier[2].in_features, 2
+    )
 
-    def save_gradient(self, module, grad_input, grad_output):
-        self.gradients = grad_output[0]
+    model.load_state_dict(torch.load(MODEL_PATH, map_location="cpu"))
 
-    def forward(self, x):
-        return self.model(x)
-
-def load_model():
-    model = EfficientNetWithHooks()
     model.eval()
+
     return model
