@@ -1,4 +1,4 @@
-# 🛡️ Detect The Deceptive — Multi-Modal Deepfake Detection Platform
+# 🛡️ Detect The Deceptive — Multi-modal deepfake detection platform using ConvNeXt + FastAPI (in development)
 
 <p align="left">
   <img src="https://img.shields.io/badge/Status-In%20Development-orange?style=flat"/>
